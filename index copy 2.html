@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RAMPGNN Web App – Independent Pose Upload + Full Results</title>
+  <style>
+    /* Basic Reset & Styling */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: #333;
+      padding: 20px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    header h1 {
+      font-size: 2.5rem;
+      color: #fff;
+    }
+
+    .container {
+      background: #fff;
+      max-width: 900px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .section {
+      margin-bottom: 30px;
+    }
+
+    .section h2 {
+      margin-bottom: 15px;
+      color: #444;
+      text-align: center;
+    }
+
+    .pose-inputs {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+    }
+
+    .input-group {
+      margin-bottom: 15px;
+    }
+
+    .input-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+
+    input[type="file"],
+    input[type="number"] {
+      width: 100%;
+      padding: 8px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+    }
+
+    .preview {
+      width: 100%;
+      max-width: 180px;
+      height: auto;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      display: none;
+    }
+
+    button {
+      display: inline-block;
+      padding: 10px 20px;
+      margin: 10px 5px;
+      background: #667eea;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      background: #556cd6;
+    }
+
+    #loader {
+      text-align: center;
+      font-size: 1.2rem;
+      padding: 20px;
+      display: none;
+    }
+
+    #results {
+      display: none;
+    }
+
+    .result-item {
+      padding: 10px;
+      border-bottom: 1px solid #ccc;
+      margin-bottom: 10px;
+    }
+
+    .results-title {
+      font-weight: bold;
+      margin-bottom: 5px;
+      display: block;
+    }
+
+    .graph-canvas {
+      background: #f5f5f5;
+      border: 1px solid #ccc;
+      width: 100%;
+      height: 200px;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    li {
+      margin-bottom: 5px;
+    }
+
+    /* Optional: Center the buttons */
+    .btn-group {
+      text-align: center;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>RAMPGNN Web App</h1>
+    <p> Simulated Malnutrition Assessment using Multi-Pose Graph Neural Networks and Retrieval Augmentation </p>
+  </header>
+  <div class="container"> <!-- Upload Section: Independent Files + Previews -->
+    <div class="section" id="uploadSection">
+      <h2>Upload Patient Data</h2>
+      <p>Please upload 8 pose images and enter the patient’s age.</p>
+      <div class="pose-inputs"> <!-- Frontal 1 -->
+        <div class="input-group"> <label for="fileFrontal1">Frontal 1</label> <input type="file" id="fileFrontal1"
+            accept="image/*" onchange="previewImage(event, 'previewFrontal1')" /> <img id="previewFrontal1"
+            class="preview" src="#" alt="Preview Frontal 1" /> </div> <!-- Frontal 2 -->
+        <div class="input-group"> <label for="fileFrontal2">Frontal 2</label> <input type="file" id="fileFrontal2"
+            accept="image/*" onchange="previewImage(event, 'previewFrontal2')" /> <img id="previewFrontal2"
+            class="preview" src="#" alt="Preview Frontal 2" /> </div> <!-- Frontal 3 -->
+        <div class="input-group"> <label for="fileFrontal3">Frontal 3</label> <input type="file" id="fileFrontal3"
+            accept="image/*" onchange="previewImage(event, 'previewFrontal3')" /> <img id="previewFrontal3"
+            class="preview" src="#" alt="Preview Frontal 3" /> </div> <!-- Frontal 4 -->
+        <div class="input-group"> <label for="fileFrontal4">Frontal 4</label> <input type="file" id="fileFrontal4"
+            accept="image/*" onchange="previewImage(event, 'previewFrontal4')" /> <img id="previewFrontal4"
+            class="preview" src="#" alt="Preview Frontal 4" /> </div> <!-- Back -->
+        <div class="input-group"> <label for="fileBack">Back</label> <input type="file" id="fileBack" accept="image/*"
+            onchange="previewImage(event, 'previewBack')" /> <img id="previewBack" class="preview" src="#"
+            alt="Preview Back" /> </div> <!-- Left -->
+        <div class="input-group"> <label for="fileLeft">Left</label> <input type="file" id="fileLeft" accept="image/*"
+            onchange="previewImage(event, 'previewLeft')" /> <img id="previewLeft" class="preview" src="#"
+            alt="Preview Left" /> </div> <!-- Right -->
+        <div class="input-group"> <label for="fileRight">Right</label> <input type="file" id="fileRight"
+            accept="image/*" onchange="previewImage(event, 'previewRight')" /> <img id="previewRight" class="preview"
+            src="#" alt="Preview Right" /> </div> <!-- Selfie -->
+        <div class="input-group"> <label for="fileSelfie">Selfie</label> <input type="file" id="fileSelfie"
+            accept="image/*" onchange="previewImage(event, 'previewSelfie')" /> <img id="previewSelfie" class="preview"
+            src="#" alt="Preview Selfie" /> </div>
+      </div>
+      <div class="input-group"> <label for="ageInput">Patient Age:</label> <input type="number" id="ageInput"
+          placeholder="Enter patient age" min="0" /> </div>
+      <div class="btn-group"> <button onclick="runAnalysis()">Run Analysis</button> <button
+          onclick="resetApp()">Reset</button> </div>
+    </div>
+    <!-- Loader Section -->
+    <div class="section" id="loader">
+      <p>Processing data... Please wait.</p>
+    </div>
+
+    <!-- Results Section (appended below the upload section) -->
+    <div class="section" id="results">
+      <h2>Analysis Results</h2>
+
+      <div class="result-item" id="classificationResult">
+        <span class="results-title">Classification:</span>
+        <span id="classOutput"></span>
+      </div>
+
+      <div class="result-item" id="regressionResult">
+        <span class="results-title">Anthropometric Measurements (Regression):</span>
+        <ul>
+          <li><strong>Height:</strong> <span id="heightOutput"></span></li>
+          <li><strong>Weight:</strong> <span id="weightOutput"></span></li>
+          <li><strong>MUAC:</strong> <span id="muacOutput"></span></li>
+          <li><strong>HC:</strong> <span id="hcOutput"></span></li>
+        </ul>
+      </div>
+
+      <div class="result-item" id="fusionResult">
+        <span class="results-title">Fusion Weight (GAT vs. Retrieval):</span>
+        <span id="fusionOutput"></span>
+      </div>
+
+      <div class="result-item" id="graphResult">
+        <span class="results-title">Graph Attention Network Visualization:</span>
+        <canvas id="graphCanvas" class="graph-canvas"></canvas>
+      </div>
+
+      <div class="result-item" id="retrievalResult">
+        <span class="results-title">Retrieved Similar Cases:</span>
+        <ul id="retrievalList">
+          <!-- Dummy retrieved cases will be listed here -->
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Function to preview the selected image file
+    function previewImage(event, previewId) {
+      const file = event.target.files;
+      const preview = document.getElementById(previewId);
+      if (file) {
+        preview.src = URL.createObjectURL(file);
+        preview.style.display = "block";
+        preview.onload = function () {
+          URL.revokeObjectURL(preview.src);
+        };
+      } else {
+        preview.src = "#";
+        preview.style.display = "none";
+      }
+    }
+
+    // Function to run the simulated analysis without hiding the upload form
+    function runAnalysis() {
+      const requiredIds = [
+        "fileFrontal1",
+        "fileFrontal2",
+        "fileFrontal3",
+        "fileFrontal4",
+        "fileBack",
+        "fileLeft",
+        "fileRight",
+        "fileSelfie"
+      ];
+      for (let i = 0; i < requiredIds.length; i++) {
+        const inputElem = document.getElementById(requiredIds[i]);
+        if (!inputElem.files || inputElem.files.length === 0) {
+          alert(
+            "Please upload an image for " +
+            inputElem.previousElementSibling.textContent
+          );
+          return;
+        }
+      }
+      const ageInput = document.getElementById("ageInput");
+      if (ageInput.value === "" || isNaN(ageInput.value)) {
+        alert("Please enter a valid patient age.");
+        return;
+      }
+
+      // Show loader but keep the upload section visible
+      document.getElementById("loader").style.display = "block";
+      // (Optionally clear previous results to avoid confusion)
+      document.getElementById("results").style.display = "none";
+
+      // Simulate a processing delay (e.g., feature extraction, GAT processing, retrieval)
+      setTimeout(() => {
+        document.getElementById("loader").style.display = "none";
+        document.getElementById("results").style.display = "block";
+
+        // Simulated classification result based on age
+        const age = parseInt(ageInput.value);
+        const classification = age < 50 ? "Healthy" : "Malnourished";
+        const confidence = (Math.random() * 20 + 80).toFixed(1);
+        document.getElementById("classOutput").textContent =
+          classification + " (Confidence: " + confidence + "%)";
+
+        // Simulated regression outputs with dummy values
+        document.getElementById("heightOutput").textContent =
+          (Math.random() * 20 + 140).toFixed(1) + " cm";
+        document.getElementById("weightOutput").textContent =
+          (Math.random() * 10 + 40).toFixed(1) + " kg";
+        document.getElementById("muacOutput").textContent =
+          (Math.random() * 5 + 20).toFixed(1) + " cm";
+        document.getElementById("hcOutput").textContent =
+          (Math.random() * 10 + 50).toFixed(1) + " cm";
+
+        // Simulated fusion weight for combining GAT and retrieval predictions
+        document.getElementById("fusionOutput").textContent =
+          (Math.random()).toFixed(2);
+
+        // Draw a dummy graph using canvas (simulating GAT visualization)
+        drawGraphVisualization();
+
+        // Simulated retrieval of similar cases (dummy list)
+        const retrievedCases = [
+          "Case A: Age 45, Healthy",
+          "Case B: Age 60, Malnourished",
+          "Case C: Age 55, Malnourished"
+        ];
+        const retrievalList = document.getElementById("retrievalList");
+        retrievalList.innerHTML = "";
+        retrievedCases.forEach((caseItem) => {
+          let li = document.createElement("li");
+          li.textContent = caseItem;
+          retrievalList.appendChild(li);
+        });
+      }, 2000); // 2-second simulated delay
+    }
+
+    // Function to draw a dummy graph on the canvas
+    function drawGraphVisualization() {
+      const canvas = document.getElementById("graphCanvas");
+      const ctx = canvas.getContext("2d");
+      // Clear any previous drawing
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Define dummy node positions for visualization
+      const nodes = [
+        { x: 50, y: 50 },
+        { x: 150, y: 30 },
+        { x: 250, y: 60 },
+        { x: 100, y: 150 },
+        { x: 200, y: 140 },
+        { x: 300, y: 100 },
+        { x: 80, y: 200 },
+        { x: 180, y: 220 }
+      ];
+
+      // Draw edges between nodes (each pair once)
+      ctx.strokeStyle = "#888";
+      for (let i = 0; i < nodes.length; i++) {
+        for (let j = i + 1; j < nodes.length; j++) {
+          ctx.beginPath();
+          ctx.moveTo(nodes[i].x, nodes[i].y);
+          ctx.lineTo(nodes[j].x, nodes[j].y);
+          ctx.stroke();
+        }
+      }
+
+      // Draw nodes as circles
+      nodes.forEach((node) => {
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, 5, 0, 2 * Math.PI);
+        ctx.fillStyle = "#ff5722";
+        ctx.fill();
+        ctx.strokeStyle = "#333";
+        ctx.stroke();
+      });
+    }
+
+    // Function to reset all inputs, previews, and hide the results
+    function resetApp() {
+      const inputIds = [
+        "fileFrontal1",
+        "fileFrontal2",
+        "fileFrontal3",
+        "fileFrontal4",
+        "fileBack",
+        "fileLeft",
+        "fileRight",
+        "fileSelfie"
+      ];
+      inputIds.forEach(function (id) {
+        const inputElem = document.getElementById(id);
+        inputElem.value = "";
+        const preview = document.getElementById(
+          "preview" + id.replace("file", "")
+        );
+        if (preview) {
+          preview.src = "#";
+          preview.style.display = "none";
+        }
+      });
+      document.getElementById("ageInput").value = "";
+      document.getElementById("loader").style.display = "none";
+      document.getElementById("results").style.display = "none";
+    }
+  </script>
+
+</body>
+
+</html>
